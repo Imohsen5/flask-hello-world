@@ -1,1 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hand Sign Detection</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
+            flex-direction: column;
+        }
+        video, canvas {
+            border: 1px solid black;
+        }
+        #prediction {
+            margin-top: 20px;
+            font-size: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Hand Sign Detection</h1>
+    
+    <!-- Hidden video element for webcam feed -->
+    <video id="video" width="640" height="480" style="display: none;"></video>
+    
+    <!-- Canvas for rendering the webcam feed -->
+    <canvas id="canvas" width="640" height="480"></canvas>
+
+    <div id="prediction">Translation: </div>
+
+    <script>
+        const videoElement = document.getElementById('video');
+        const canvasElement = document.getElementById('canvas');
+        const predictionElement = document.getElementById('prediction');
+        const canvasContext = canvasElement.getContext('2d');
+
+        // Get user media (webcam)
+        navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } })
+            .then((stream) => {
+                videoElement.srcObject = stream;
+                videoElement.play();
+            })
+            .catch((err) => {
+                console.error('Error accessing webcam: ', err);
+            });
+
+        // Draw video frame to canvas and send it to Flask backend for prediction
+        function detectHandSign() {
+            canvasContext.drawImage(videoElement, 0, 0, canvasElement.width, canvasElement.height);
+
+            // Convert canvas to image data
+            canvasElement.toBlob((blob) => {
+                const formData = new FormData();
+                formData.append("image", blob);
+
+                fetch('/predict', {
+                    method: 'POST',
+                    body: blob
+                })
+                .then((response) => response.json())
+                .then((data) => {
+                    if (data.translation) {
+                        predictionElement.innerText = 'Translation: ' + data.translation;
+                    } else {
+                        predictionElement.innerText = 'Error: ' + data.error;
+                    }
+                })
+                .catch((error) => {
+                    predictionElement.innerText = 'Error during prediction: ' + error;
+                });
+            }, 'image/jpeg');
+        }
+
+        // Continuously capture video frames for detection
+        setInterval(detectHandSign, 1000); // Update every second
+    </script>
+</body>
+</html>
 
