@@ -8,7 +8,7 @@ app = Flask(__name__)
 CORS(app)  # Allow cross-origin requests for the API
 
 # Load the TensorFlow model
-model = tf.keras.models.load_model('model/model.h5')  # Adjust to your model location
+model = tf.keras.models.load_model('model/finetuned.h5')  # Adjust to your model location
 
 # Labels for the hand signs (same as in the React code)
 labels = [
